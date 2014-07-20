@@ -44,8 +44,8 @@ class If(val elseClause : Option[Block], keyVals : (Predicate,Block)*) extends I
 		}
 			
 		var elseStr : String = elseClause match {
-			case Some(instruction) => "\n%selse %s\n".format(indent,instruction.format("",indent))
-			case None              => "\n"
+			case Some(instruction) => "\n%selse %s".format(indent,instruction.format("",indent))
+			case None              => ""
 		}
 		return casesStr + elseStr
 	}

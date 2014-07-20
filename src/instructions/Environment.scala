@@ -2,6 +2,7 @@ package instructions
 
 class Environment extends Cloneable {
 	private var env : Map[String,Option[Double]] = Map()
+	private var fun : Map[String,Function]       = Map()
 	
 	private def this(env : Map[String,Option[Double]]) = {
 		this()
@@ -18,7 +19,7 @@ class Environment extends Cloneable {
 	def -=(key : String)          : Environment             = { env -= key; return this; }
 	def !+=(kv : (String,Option[Double])) : Environment     = { 
 		get(kv._1 ) match {
-			case Some(value) => throw new DuplicateVariableException(kv._1)
+			case Some(value) => throw new DuplicateDefinitionException("variable",kv._1)
 			case None        => return this += kv
 		}
 	}
@@ -39,7 +40,6 @@ object Environment {
 	}
 }
 
-
 class UndefinedVariableException(var varName : String) extends Exception("Identifier %s is not declared".format(varName))
-class DuplicateVariableException(var varName : String) extends Exception("Duplicate variable %s".format(varName)) 
+class DuplicateDefinitionException(var typeName : String, var varName : String) extends Exception("Duplicate %s %s".format(typeName,varName)) 
 class UninitializedVariableException(var varName : String) extends Exception("Variable %s was declared but not initialized".format(varName))

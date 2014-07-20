@@ -7,7 +7,7 @@ class PrintString(val a : Any) extends Instruction[Unit] {
 		println(a)
 		return ({},ev)
 	}
-	def format(indent : String) : String = "%sprintln(\"%s\")".format(indent,a)
+	def format(indent : String) : String = "%sprintln(\"%s\");".format(indent,a)
 }
 
 class PrintExpr(val expr : Expression) extends Instruction[Unit] {
@@ -15,5 +15,5 @@ class PrintExpr(val expr : Expression) extends Instruction[Unit] {
 		println(expr.valuation(ev))
 		return ({},ev)
 	}
-	def format(indent : String) : String = "%sprintln(%s)".format(indent,expr)
+	def format(indent : String) : String = "%sprintln(%s);".format(indent,expr)
 }

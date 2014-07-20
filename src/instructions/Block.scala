@@ -1,7 +1,7 @@
 package instructions
 
 class Block(instr : Instruction[Any]*) extends Instruction[Unit] {
-	private[instructions] var instructions : Array[Instruction[Any]] = instr.toArray	
+	val instructions : Array[Instruction[Any]] = instr.toArray	
 	
 	def iterator : Iterator[Instruction[Any]] = instructions.iterator
 	def exec(ev : Environment): (Unit,Environment) = {
@@ -27,6 +27,6 @@ class Block(instr : Instruction[Any]*) extends Instruction[Unit] {
 		return if (showBrackets) "%s{\n%s%s}".format(indentBefore,result,indent) else indentBefore + result.trim
 	}
 	
-	override def clone : Block = { var block = new Block(); block.instructions = instructions.clone; return block; }
+	override def clone : Block = new Block(instructions.clone.toSeq : _*)
 	def size = instructions .size
 }

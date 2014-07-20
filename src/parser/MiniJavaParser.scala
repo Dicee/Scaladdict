@@ -20,6 +20,9 @@ import scala.collection.mutable.MutableList
 import instructions.Switch
 import instructions.PrintExpr
 import instructions.PrintString
+import instructions.Affectation
+import instructions.For
+import instructions.While
 
 class ExpressionParser extends JavaTokenParsers {
 	//Expressions
@@ -68,15 +71,16 @@ class MiniJavaParser extends ExpressionParser {
 	 type B = Block
 	 type D = Double
 	 
-	 def instr : Parser[I] = assignment | declaration | ifInstr | block
+	 def instr : Parser[I] = ((affectation | print) <~ ";") | ifInstr | block | forInstr | switch
 	 def block : Parser[B] = "{" ~> (instr*) <~ "}" ^^ { case l => new Block(l.toSeq : _*) }
 	 
 	 //Affectations
-	 def declaration : Parser[I] = ("var" ~> ident ~ (("=" ~> allExpr)?) <~ ";") ^^ { 
+	 def declaration   : Parser[Declaration] = "var" ~> ident ~ (("=" ~> allExpr)?) ^^ { 
 		 	case x ~ Some(v) => new Declaration(x,Some(v)) 
 		 	case x ~ None    => new Declaration(x,None)
 	 	}
-	 def assignment    : Parser[I]     = (ident <~ "=") ~ allExpr <~ ";" ^^ { case x ~ y => new Assignment(x,y) }
+	 def assignment    : Parser[Assignment]  = (ident <~ "=") ~ allExpr ^^ { case x ~ y => new Assignment(x,y) }
+	 def affectation   : Parser[Affectation] = declaration | assignment
 
 	 //If, else if, else
 	 def ifInstr       : Parser[I]     = ifStatement ^^ { case a ~ b ~ c => new If(c,(List(a) ++ b).toSeq : _*) }
@@ -89,19 +93,34 @@ class MiniJavaParser extends ExpressionParser {
 	 def switch        : Parser[I]     = switchStruct                          ^^ { case a ~ b ~ c => new Switch(a,c,b.toSeq : _*)          } 
 	 def caseClause    : Parser[(D,B)] = ("case" ~> fpn <~ ":") ~ rep(instr)   ^^ { case a ~ b     => a.toDouble -> new Block(b.toSeq : _*) }
 	 def defaultClause : Parser[B]     = ("default" ~ ":") ~> rep(instr)       ^^ { case a         => new Block(a.toSeq : _*)               }
-	 def switchStruct                  = (("switch" ~ "(") ~> expr <~ (")" ~ "{")) ~ rep(caseClause) ~ (defaultClause?) <~ "}"
+	 def switchStruct                  = (("switch" ~ "(") ~> allExpr <~ (")" ~ "{")) ~ rep(caseClause) ~ (defaultClause?) <~ "}"
 	 
 	 //Print
-	 def print         : Parser[I]     = ("println" ~ "(") ~> (expr | ("\"" ~> "(.)*".r <~ "\"")) <~ ")" ^^ { 
+	 def print         : Parser[I]     = ("println" ~ "(") ~> (allExpr | "\"(.)*\"".r) <~ ")" ^^ { 
 		 	case a : Expression => new PrintExpr(a)
-		 	case a : Any        => println(a) ; new PrintString(a)
+		 	case a : String     => new PrintString(a.substring(1,a.length() - 1))
 	 	}
+	 
+	 //For
+	 def forInstr     : Parser[I]      = forStruct ^^ { case a ~ b ~ c ~ d => {
+		 	var result = new For(b,d.instructions.toSeq : _*);
+		 	a match { case Some(init ~ last) => result.addInitClause  (init.:+(last).toSeq : _*); case None => }
+		 	c match { case Some(init ~ last) => result.addUpdateClause(init.:+(last).toSeq : _*); case None => }
+		 	result
+	 	}
+	 }
+	 def initClause                    = (rep(affectation <~ ",") ~ affectation)?
+	 def updateClause                  = (rep(assignment <~ ",") ~ assignment)?
+	 def forStruct                     = ("for" ~ "(") ~> (initClause <~ ";") ~ ((pred?) <~ ";") ~ (updateClause <~ ")") ~ block
+	 
+	 //While
+	 def whileInstr   : Parser[I]      = (("while" ~ "(") ~> pred <~ ")") ~ block ^^ { case a ~ b => new While(a,b.instructions .toSeq : _*)}
 }
 
 object Main extends MiniJavaParser {
 	def main(args : Array[String]) : Unit = {
 		var ev = Environment("gamma" -> 5)
-		val lines = Source.fromFile("test3.txt").mkString
+		val lines = Source.fromFile("test4.txt").mkString
 //		println(lines)
 //		println(parseAll(pred, "5 > 7 && true || false && true || (true && 9 <= 9)").get.test(ev))
 //		println(parseAll(expr,lines).get)
@@ -109,9 +128,10 @@ object Main extends MiniJavaParser {
 		
 //		println(parseAll(pred,"(!(5 > 7) && (5 > 7)) || !false").get.test(ev))
 //		println(parseAll(allExpr,"- 5 *(5 + 6) + 55").get.valuation(ev))
-		println("c".matches("(\\w | \\W)"))
-		println(parseAll(print,lines).get)
-		println(parseAll(testou,"coucou").get)
+//		println("c".matches("(\\w | \\W)"))
+//		println(parseAll(print,lines).get)
+//		println(parseAll(testou,"coucou").get)
+		println(parseAll(whileInstr,lines).get)
 	}
 	
 	def testou = "(.)*".r
