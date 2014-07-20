@@ -1,0 +1,8 @@
+switch (5) {
+	case 5 : 
+		z = 17;
+	case 17 : 
+		var x;
+		var y = 19;
+	default : var x;
+}

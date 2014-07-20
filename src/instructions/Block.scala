@@ -23,7 +23,8 @@ class Block(instr : Instruction[Any]*) extends Instruction[Unit] {
 			}
 			sb.toString
 		}
-		return if (instructions.size != 1) "%s{\n%s%s}".format(indentBefore,result,indent) else result.trim
+		var showBrackets = instructions.size != 1 || instructions(0).isInstanceOf[Block] || instructions(0).isInstanceOf[Declaration] 
+		return if (showBrackets) "%s{\n%s%s}".format(indentBefore,result,indent) else indentBefore + result.trim
 	}
 	
 	override def clone : Block = { var block = new Block(); block.instructions = instructions.clone; return block; }

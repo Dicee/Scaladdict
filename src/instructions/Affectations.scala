@@ -3,7 +3,7 @@ package instructions
 import expressions.Expression
 import expressions.Variable
 
-trait Affectation extends Instruction[Any] {	def name : String }
+trait Affectation extends Instruction[Any] { def name : String }
 
 class Assignment(private val varName : String, val rightMember : Expression) extends Instruction[Double] with Affectation {
 	def this(variable : Variable, rightMember : Expression) = this(variable.name,rightMember) 
@@ -15,7 +15,7 @@ class Assignment(private val varName : String, val rightMember : Expression) ext
 		return (result,ev)
 	}
 	
-	def format(indent : String) = "%s%s = %s".format(indent,varName,rightMember)
+	def format(indent : String) = "%s%s = %s;".format(indent,varName,rightMember)
 	override def clone          = new Assignment(varName,rightMember)
 }
 
@@ -38,8 +38,8 @@ class Declaration(private val varName : String, val rightMember : Option[Express
 	}
 	
 	def format(indent : String) = rightMember match {
-		case Some(expr) => "%svar %s = %s".format(indent,varName,expr)
-		case None       => "%svar %s".format(indent,varName)
+		case Some(expr) => "%svar %s = %s;".format(indent,varName,expr)
+		case None       => "%svar %s;".format(indent,varName)
 	} 
 	
 	override def clone = new Declaration(varName,rightMember)

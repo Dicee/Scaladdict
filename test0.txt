@@ -1,7 +1,11 @@
 {
-	{ }
-	{ 
+	var h;
+	{
 		var x;
 		var y;
+	}
+	if (5) {
+		var z;
+		var u;
 	}
 }
