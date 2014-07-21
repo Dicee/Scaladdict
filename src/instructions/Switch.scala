@@ -24,17 +24,15 @@ class Switch(val expr : Expression, val default : Option[Block], keyVals : (Doub
 			cases += kv
 	}
 	
-	def exec(ev : Environment) : (Unit,Environment) = {
-		var newEv : Environment = new Environment
+	def exec(ev : Environment) = {
 		var instr = cases.get(expr.valuation(ev)) match {
-			case Some(instruction) => newEv = instruction.exec(ev)._2
+			case Some(instruction) => instruction.exec(ev)
 			case None              => 
 				default match {
-					case Some(instruction) => newEv = instruction.exec(ev)._2
-					case None              => newEv = ev
+					case Some(instruction) => instruction.exec(ev)
+					case None              => 
 				}
 		}
-		return ({},newEv)
 	}
 	
 	def formatInstr(indent : String): String = {

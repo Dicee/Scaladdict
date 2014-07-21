@@ -3,12 +3,12 @@ package instructions
 import expressions.Expression
 
 trait Instruction[+T] extends Cloneable {
-	def exec(ev : Environment) : (T,Environment)
+	def exec(ev : Environment) : T
 	def formatInstr(indent : String) : String
 }
 
 object NOP extends Instruction[Unit] {
-	def exec(ev : Environment)  : (Unit,Environment) = ({},ev)
+	def exec(ev : Environment)  : Unit = { }
 	def formatInstr(indent : String): String = "{ }"
 }
 

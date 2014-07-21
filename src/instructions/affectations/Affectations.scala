@@ -10,12 +10,12 @@ class Assignment(protected val varName : String, val rightMember : Expression) e
 	def this(variable : Variable, rightMember : Expression) = this(variable.name,rightMember) 
 	
 	def name = varName
-	def exec(ev : Environment): (Double,Environment) = {
+	def exec(ev : Environment) : Double = {
 		var result = rightMember.valuation(ev)
 		ev        += varName -> Some(result)
-		return (result,ev)
+		return result
 	}
-	def valuation(ev : Environment)  = exec(ev)._1
+	def valuation(ev : Environment)  = exec(ev)
 	def formatExpr                   = "(%s = %s)".format(varName,rightMember)
 	def formatInstr(indent : String) = "%s%s = %s".format(indent,varName,rightMember)
 	override def clone               = new Assignment(varName,rightMember)
@@ -28,9 +28,7 @@ class Declaration(private val varName : String, val rightMember : Option[Express
 	def this(varName : String, expr : Expression)    = this(varName,Some(expr))
 	
 	def name = varName
-	def exec(ev : Environment): (Unit,Environment) = {
-		return ({},ev !+= varName -> initValue(ev))
-	}
+	def exec(ev : Environment) = ev !+= varName -> initValue(ev)
 
 	private def initValue(ev : Environment) = {
 		rightMember match {
@@ -49,11 +47,11 @@ class Declaration(private val varName : String, val rightMember : Option[Express
 private[affectations] class OpAssignment(varName : String, expr : Expression, symbol : String, op : (Double,Double) => Double) 
 	extends Assignment(varName,expr) with Affectation {
 	
-	override def exec(ev : Environment): (Double,Environment) = {
+	override def exec(ev : Environment) : Double= {
 		var eval  = rightMember.valuation(ev)
 		var value = op(ev.get(varName),eval)
 		ev       += varName -> Some(value)
-		return (value,ev)
+		return value
 	}
 	override def formatExpr                   = "(%s %s= %s)".format(varName,symbol,rightMember)
 	override def formatInstr(indent : String) = "%s%s %s= %s".format(indent,varName,symbol,rightMember)

@@ -14,9 +14,9 @@ class MiniJavaParser extends JavaTokenParsers {
 	def fpn = floatingPointNumber
 	
 	///!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	///									Don't forget the inc/dec
+	///						      Don't forget to improve the inc/dec
 	///!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	def allExpr   : Parser[E]    = assignment | tern | expr 
+	def allExpr   : Parser[E]    = inc | assignment | tern | expr 
 	def expr      : Parser[E]    = term ~ rep(plus | minus)             ^^ { case a   ~ b   => (a /: b)((acc,f) => f(acc)) } 
 	def term      : Parser[E]    = factor ~ rep(times | divide)         ^^ { case a   ~ b   => (a /: b)((acc,f) => f(acc)) }
 	def plus      : Parser[E=>E] = "+" ~ term                           ^^ { case "+" ~ b   => _ + b                       }
@@ -65,7 +65,7 @@ class MiniJavaParser extends JavaTokenParsers {
 		 case x ~ None    => new Declaration(x,None)
 	 }
 	def assignment                  = (ident ~ "(\\+|-|\\*|/|)=".r) ~ allExpr ^^ { 
-		case a ~  "=" ~ b => new Assignment(a,b);
+		case a ~  "=" ~ b => new Assignment(a,b)
 		case a ~ "+=" ~ b => new PlusAssignment(a,b) 
 		case a ~ "-=" ~ b => new MinusAssignment(a,b) 
 		case a ~ "*=" ~ b => new ProdAssignment(a,b) 
@@ -121,8 +121,8 @@ class MiniJavaParser extends JavaTokenParsers {
 
 object Main extends MiniJavaParser {
 	def main(args : Array[String]) : Unit = {
-		var ev = Environment("gamma" -> 5)
-		val lines = Source.fromFile("test6.txt").mkString
+		var ev = Environment("x" -> 5)
+		val lines = Source.fromFile("test5.txt").mkString
 //		println(lines)
 //		println(parseAll(pred, "5 > 7 && true || false && true || (true && 9 <= 9)").get.test(ev))
 //		println(parseAll(expr,lines).get)
@@ -134,6 +134,7 @@ object Main extends MiniJavaParser {
 //		println(parseAll(print,lines).get)
 //		println(parseAll(testou,"coucou").get)
 //		println(parseAll(whileInstr,lines).get)
-		println(parseAll(allExpr,lines).get)
+		println(parseAll(instr,lines).get.exec(ev))
+		println(ev)
 	}
 }

@@ -8,15 +8,15 @@ private[affectations] abstract class IncDec(private val varName : String, val af
 	
 	def this(varName : String, inc : Double) = this(varName,true,inc)
 	def name = varName
-	def exec(ev : Environment): (Double,Environment) = {
+	def exec(ev : Environment) : Double = {
 		var x = ev.get(varName) + inc
 		ev   += varName -> Some(x)
-		return (x,ev)
+		return x
 	}
 	
 	def valuation(ev : Environment) : Double = {
 		var x = ev.get(varName)
-		var y = exec(ev)._1 
+		var y = exec(ev)
 		return if (after) x else y
 	}
 }

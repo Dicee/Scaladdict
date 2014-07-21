@@ -6,11 +6,10 @@ class Block(instr : Instruction[Any]*) extends AbstractInstruction[Unit] {
 	val instructions : Array[Instruction[Any]] = instr.toArray	
 	
 	def iterator : Iterator[Instruction[Any]] = instructions.iterator
-	def exec(ev : Environment): (Unit,Environment) = {
+	def exec(ev : Environment) : Unit = {
 		var cpEv = ev.clone
-		instructions.foreach(instr => cpEv = instr.exec(cpEv)._2)
+		instructions.foreach(instr => instr.exec(cpEv))
 		cpEv.foreach{ case (key,value) => if (ev.contains(key)) ev += key -> value }
-		return ({},ev)
 	}
 	
 	def formatInstr(indent : String): String =  format(indent,indent)

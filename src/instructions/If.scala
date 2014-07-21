@@ -21,13 +21,13 @@ class If(val elseClause : Option[Block], keyVals : (Predicate,Block)*) extends I
 		this.cases = cases
 	}
 	
-	def exec(ev : Environment) : (Unit,Environment) = {
+	def exec(ev : Environment) = {
 		for (caseClause <- cases)
 			if (caseClause._1 .test(ev))
-				return ({},caseClause._2 .exec(ev)._2)
+				caseClause._2 .exec(ev)
 		elseClause match {
-			case Some(instr) => return ({},instr.exec(ev)._2)
-			case None        => return ({},ev)
+			case Some(instr) => instr.exec(ev)
+			case None        => 
 		}
 	}
 	

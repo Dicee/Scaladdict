@@ -5,6 +5,6 @@ class Program(val block : Block) extends Iterable[Instruction[Any]] {
 	override def toString = "Program " + block.formatInstr("")
 	def exec : Unit = {
 		var ev : Environment = new Environment
-		block.instructions.foreach(instr => { ev = instr.exec(ev)._2 ; println("Environment = " + ev) })
+		block.instructions.foreach(instr => { instr.exec(ev) ; println("Environment = " + ev) })
 	} 
 }

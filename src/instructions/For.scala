@@ -22,20 +22,19 @@ class For(val continuation : Option[Predicate], instr : Instruction[Any]*) exten
 		}
 	}
 	
-	override def exec(ev : Environment) : (Unit,Environment) = {
+	override def exec(ev : Environment) = {
 		var cpEv = ev.clone
-		for (affectation <- initialization) cpEv = affectation.exec(ev)._2
+		for (affectation <- initialization) affectation.exec(ev)
 		while (continuation match { case Some(p) => p.test(cpEv) ; case None => true }) {
 			instructions.foreach(instr => {
-				cpEv = instr.exec(cpEv)._2
-				for (updateClause <- update) cpEv = updateClause.exec(cpEv)._2
+				instr.exec(cpEv)
+				for (updateClause <- update) updateClause.exec(cpEv)
 			})
 		}
 		cpEv.foreach{ case (key,value) => if (ev.contains(key)) ev += key -> value }
-		return ({},ev)
 	}
 	
-	override def formatInstr(indent : String): String = {
+	override def formatInstr(indent : String) : String = {
 		var initStr     = initialization.addString(new StringBuilder,", ").toString
 		var continueStr = continuation match { case Some(p) => p.toString ; case None => "" }
 		var updateStr   = update.addString(new StringBuilder,", ").toString
