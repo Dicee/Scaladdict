@@ -1,0 +1,7 @@
+while (jeTemmerde) {
+	fuckyou = fuckyou + 1;
+	for (var enculé = 5 ; enculé < 2 ; enculé = enculé - 1) {
+		println("FUCKKK");
+		println("YOUUUUUUUUUU");
+	}
+}

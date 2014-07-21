@@ -1,6 +1,8 @@
 package instructions
 
-class Block(instr : Instruction[Any]*) extends Instruction[Unit] {
+import instructions.affectations.Declaration
+
+class Block(instr : Instruction[Any]*) extends AbstractInstruction[Unit] {
 	val instructions : Array[Instruction[Any]] = instr.toArray	
 	
 	def iterator : Iterator[Instruction[Any]] = instructions.iterator
@@ -11,7 +13,7 @@ class Block(instr : Instruction[Any]*) extends Instruction[Unit] {
 		return ({},ev)
 	}
 	
-	def format(indent : String) : String =  format(indent,indent)
+	def formatInstr(indent : String): String =  format(indent,indent)
 	def format(indentBefore : String, indent : String) : String = {
 		if (instructions.isEmpty)
 			return indentBefore + "{ }"
@@ -19,7 +21,7 @@ class Block(instr : Instruction[Any]*) extends Instruction[Unit] {
 		var result : String = {			
 			var sb : StringBuilder = new StringBuilder
 			instructions.foreach{ instr =>
-				sb.append(instr.format(indent + "\t") + "\n")
+				sb.append(instr.formatInstr(indent + "\t") + "\n")
 			}
 			sb.toString
 		}

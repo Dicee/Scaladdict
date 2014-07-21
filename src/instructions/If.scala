@@ -31,7 +31,7 @@ class If(val elseClause : Option[Block], keyVals : (Predicate,Block)*) extends I
 		}
 	}
 	
-	def format(indent : String) : String = {
+	def formatInstr(indent : String): String = {
 		var casesStr : String = {
 			var sb = new StringBuilder
 			var i  = 0

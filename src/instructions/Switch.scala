@@ -3,7 +3,7 @@ package instructions
 import expressions.Expression
 import scala.collection.mutable.HashMap
 
-class Switch(val expr : Expression, val default : Option[Block], keyVals : (Double,Block)*) extends Instruction[Unit] {
+class Switch(val expr : Expression, val default : Option[Block], keyVals : (Double,Block)*) extends AbstractInstruction[Unit] {
 	private var cases : HashMap[Double,Block] = new HashMap()
 	keyVals.foreach(keyVal => this += keyVal)
 	
@@ -37,7 +37,7 @@ class Switch(val expr : Expression, val default : Option[Block], keyVals : (Doub
 		return ({},newEv)
 	}
 	
-	def format(indent : String) : String = {
+	def formatInstr(indent : String): String = {
 		var casesStr : String = 
 			if (cases.isEmpty) "" 
 			else {

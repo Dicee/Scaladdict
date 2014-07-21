@@ -9,6 +9,6 @@ class While(val continuation : Predicate, instr : Instruction[Any]*) extends Blo
 		cpEv.foreach{ case (key,value) => if (ev.contains(key)) ev += key -> value }
 		return ({},ev)
 	}
-	override def format(indent : String) = "while (%s) %s".format(continuation,super.format("",indent))
+	override def formatInstr(indent : String) = "while (%s) %s".format(continuation,super.format("",indent))
 	override def clone = new While(continuation,instructions.clone.toSeq : _*)
 }

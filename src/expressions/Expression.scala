@@ -17,4 +17,7 @@ abstract class Expression extends Predicate {
 	def < (expr : Expression) = new LowerThan(this,expr)
 	def <=(expr : Expression) = new LowerThan(this,expr,true)
 	def opposite              = new Opposite(this)
+	
+	def formatExpr : String
+	override def toString = formatExpr
 }

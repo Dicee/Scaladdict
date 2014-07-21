@@ -1,1 +1,9 @@
-println("coucou")
+for (var x = 5, y = 17, var z = 9 ; true ; ) { 
+	var z = 5;
+	if (y) {
+		z = z + 2;
+	} else {
+		z = z + 3;
+	}
+	println(10)
+}

@@ -2,12 +2,12 @@ package instructions
 
 import expressions.Expression
 
-class PrintString(val a : Any) extends Instruction[Unit] {
+class PrintString(val a : Any) extends AbstractInstruction[Unit] {
 	def exec(ev : Environment)  : (Unit,Environment) = {
 		println(a)
 		return ({},ev)
 	}
-	def format(indent : String) : String = "%sprintln(\"%s\");".format(indent,a)
+	def formatInstr(indent : String): String = "%sprintln(\"%s\");".format(indent,a)
 }
 
 class PrintExpr(val expr : Expression) extends Instruction[Unit] {
@@ -15,5 +15,5 @@ class PrintExpr(val expr : Expression) extends Instruction[Unit] {
 		println(expr.valuation(ev))
 		return ({},ev)
 	}
-	def format(indent : String) : String = "%sprintln(%s);".format(indent,expr)
+	def formatInstr(indent : String): String = "%sprintln(%s);".format(indent,expr)
 }

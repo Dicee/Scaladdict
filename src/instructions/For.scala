@@ -1,6 +1,8 @@
 package instructions
 
 import predicates.Predicate
+import instructions.affectations.Declaration
+import instructions.affectations.Affectation
 
 class For(val continuation : Option[Predicate], instr : Instruction[Any]*) extends Block(instr : _*) {
 	private var initialization : Array[Affectation]      = Array()
@@ -33,7 +35,7 @@ class For(val continuation : Option[Predicate], instr : Instruction[Any]*) exten
 		return ({},ev)
 	}
 	
-	override def format(indent : String) : String = {
+	override def formatInstr(indent : String): String = {
 		var initStr     = initialization.addString(new StringBuilder,", ").toString
 		var continueStr = continuation match { case Some(p) => p.toString ; case None => "" }
 		var updateStr   = update.addString(new StringBuilder,", ").toString

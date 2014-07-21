@@ -10,20 +10,20 @@ class Environment extends Cloneable {
 	}
 	
 	override def clone                                      = new Environment(env ++ Map())
-	def get(key : String)                                   = env.get(key)
-	def contains(key : String)                              = env.contains(key)
-	def iterator                                            = env.iterator
 	override def toString                                   = env.toString
+	def iterator                                            = env.iterator
 	def foreach(mapper : ((String,Option[Double])) => Unit) = env.foreach(mapper)
-	def +=(kv : (String,Option[Double]))  : Environment     = { env += kv; return this; }
-	def -=(key : String)          : Environment             = { env -= key; return this; }
-	def !+=(kv : (String,Option[Double])) : Environment     = { 
-		get(kv._1 ) match {
+	def contains(key : String)                              = env.contains(key)
+	def +=(kv : (String,Option[Double]))     	            = { env += kv;                   this; }
+	def +=(s  : String)                                     = { env += s     -> None;        this; }
+	def -=(key : String)                                    = { env -= key;                  this; }
+	def !+=(kv : (String,Option[Double])) = { 
+		env.get(kv._1 ) match {
 			case Some(value) => throw new DuplicateDefinitionException("variable",kv._1)
-			case None        => return this += kv
+			case None        => this += kv
 		}
 	}
-	def value(key : String) : Double = get(key) match {
+	def get(key : String) : Double = env.get(key) match {
 		case Some(optionValue) => optionValue match {
 			case Some(d) => d
 			case None    => throw new UninitializedVariableException(key)
