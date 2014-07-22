@@ -1,6 +1,7 @@
 package instructions
 
 import expressions.Expression
+import scala.util.control.Breaks._
 import scala.collection.mutable.HashMap
 import predicates.Predicate
 
@@ -22,9 +23,12 @@ class If(val elseClause : Option[Block], keyVals : (Predicate,Block)*) extends I
 	}
 	
 	def exec(ev : Environment) = {
-		for (caseClause <- cases)
-			if (caseClause._1 .test(ev))
+		breakable { for (caseClause <- cases)
+			if (caseClause._1 .test(ev)) {
 				caseClause._2 .exec(ev)
+				break
+			}
+		}
 		elseClause match {
 			case Some(instr) => instr.exec(ev)
 			case None        => 

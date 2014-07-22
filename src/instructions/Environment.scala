@@ -1,9 +1,10 @@
 package instructions
 
+import scala.collection.mutable.HashSet
+
 class Environment extends Cloneable {
+	//Variables
 	private var env : Map[String,Option[Double]] = Map()
-	private var fun : Map[String,Function]       = Map()
-	
 	private def this(env : Map[String,Option[Double]]) = {
 		this()
 		this.env = env
@@ -30,6 +31,21 @@ class Environment extends Cloneable {
 		}
 		case None => throw new UndefinedVariableException(key)
 	}
+	
+	//Functions
+	private var functions : HashSet[FunctionDef] = HashSet()
+	
+	def containsDef(elt : FunctionDef) = functions.contains(elt)
+	def defFunction(elt : FunctionDef) = { 
+		if (!functions.add(elt)) throw new DuplicateDefinitionException("function",elt.ident)
+	}
+//	def getDef(key : String) : FunctionDef = env.get(key) match {
+//		case Some(optionValue) => optionValue match {
+//			case Some(d) => d
+//			case None    => throw new UninitializedVariableException(key)
+//		}
+//		case None => throw new UndefinedVariableException(key)
+//	}
 }
 
 object Environment {
