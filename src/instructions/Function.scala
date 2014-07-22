@@ -27,10 +27,17 @@ class FunctionDef(val ident : String, val body : Block, val returnInstr : Expres
 	}
 }
 
-//class FunctionCall( extends EvaluableInstruction {
-//	def exec(ev : Environment) : Double = 0
-//	def formatInstr(indent : String) = "%s%s %s".format(indent,ident,)
-//}
+class FunctionCall(ident : String, args : Array[Expression]) extends EvaluableInstruction {
+	def exec(ev : Environment) : Double = 0
+	def formatInstr(indent : String) = {
+		var sb      = new StringBuilder
+		var argsStr = {
+			var i = 0
+			args.foreach(arg => sb.append((if (i == 0) "" else ", ") + arg.formatExpr))
+		}
+		"%s%s(%s)".format(indent,ident,args.addString(new StringBuilder,", "))
+	}
+}
 
 abstract class Parameter(val name : String)
 case class Expr(s : String, expr : Expression) extends Parameter(s)
