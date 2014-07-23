@@ -6,6 +6,7 @@ import expressions.Value
 import expressions.Variable
 import predicates.Predicate
 import scala.util.control.Breaks._
+import predicates.Equal
 
 class FunctionDef(val ident : String, val body : Block, val args : Array[String]) extends Instruction[Unit] {
 	/////// That's part of the main constructor ///////
@@ -19,7 +20,6 @@ class FunctionDef(val ident : String, val body : Block, val args : Array[String]
 	private[instructions] def containsReturn = true
 	private def findReturn(instr : Instruction[Any]) = {
 		var block = instr.toBlock
-		println(body.instructions.addString(new StringBuilder).toString)
 		block.instructions.find(instr => instr.isInstanceOf[Return]) match { 
 			case None    => throw new MissingReturnException(ident) 
 			case Some(x) =>
@@ -44,6 +44,14 @@ class FunctionDef(val ident : String, val body : Block, val args : Array[String]
 		var other = a.asInstanceOf[FunctionDef]
 		return other.ident == ident && other.args.length == args.length
 	}
+	
+	override def hashCode : Int = {
+		val prime  = 31
+		var result = 1
+		result     = prime * result + ident.hashCode
+		result     = prime * result + args.length
+		return result
+	}
 }
 
 class FunctionCall(ident: String, args: Array[Expression]) extends EvaluableInstruction {
@@ -59,10 +67,11 @@ class FunctionCall(ident: String, args: Array[Expression]) extends EvaluableInst
 		var execEv = ev.cloneFunDef
 		(funDef.args zip args).foreach{ case (a,b) => execEv !+= a -> Some(b.valuation(ev)) }
 		
-		breakable { funDef.body.instructions.foreach(instr => 
-			if (instr.isInstanceOf[Return]) { result = instr.asInstanceOf[Return].exec(execEv); break }
-			else                            instr.exec(execEv)
-		)}
+		try {
+			funDef.body.instructions.foreach(instr => instr.exec(execEv))
+		} catch {
+			case e : ReturnResultException => result = e.result; println("coucou")
+		}
 		return result
 	}
 	
@@ -78,7 +87,7 @@ class FunctionCall(ident: String, args: Array[Expression]) extends EvaluableInst
 }
 
 class Return(expr : Expression) extends Instruction[Double] {
-	def exec(ev: Environment)                = expr.valuation(ev)
+	def exec(ev: Environment)                = throw new ReturnResultException(expr.valuation(ev))
 	def formatInstr(indent : String)         = "%sreturn %s;".format(indent,expr.formatExpr)
 	def formatExpr                           = formatInstr("")
 	private[instructions] def containsReturn = true
@@ -86,3 +95,4 @@ class Return(expr : Expression) extends Instruction[Double] {
 
 class MissingReturnException(ident : String) extends Exception("%s is missing a return instruction".format(ident))
 class DuplicateParameterException extends Exception("All the parameters identifiers must be distinct")
+private class ReturnResultException(val result : Double) extends Exception

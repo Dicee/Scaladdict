@@ -1,9 +1,9 @@
 package expressions
 
 import instructions._
-import predicates._
-import instructions.affectations.Declaration
 import instructions.affectations.Assignment
+import instructions.affectations.Declaration
+import predicates._
 
 object Test {
 	def main(args : Array[String]) : Unit = {
@@ -32,9 +32,18 @@ object Test {
 		
 		var prog : Program = new Program(new Block(declareCoucou,declareNon,alloc,declareResult,switch))
 		
+		var n = new Variable("n")
+		var case0 = new If(new Equal(n,new Value(0)) -> new Return(new Value(1)).toBlock)
+		var case1 = new Return(new Dot(n,new FunctionCall("fact",Array(new Minus(n,new Value(1))))))
+		var factBody = new Block(case0,case1)
+		var factDef = new FunctionDef("fact",factBody,Array("n"))
+		
+		var factCall = new FunctionCall("fact",Array(new Value(6)))
+		factDef.exec(ev)
+		println(factCall.exec(ev))
 		
 //		println(prog)
-		prog.exec
+//		prog.exec
 //		println(block)
 //		println(ev)
 //		println(block.exec(ev)._2)

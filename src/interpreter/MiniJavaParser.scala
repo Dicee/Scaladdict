@@ -1,4 +1,4 @@
-package parser
+package interpreter
 
 import scala.io.Source
 import scala.util.parsing.combinator.JavaTokenParsers

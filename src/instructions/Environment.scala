@@ -2,6 +2,7 @@ package instructions
 
 import scala.collection.mutable.HashSet
 import scala.util.control.Breaks._
+import expressions.Value
 
 class Environment(private var env : Map[String,Option[Double]] = Map(), private var functions : Map[String,HashSet[FunctionDef]] = Map()) extends Cloneable {
 	//Variables
@@ -11,7 +12,9 @@ class Environment(private var env : Map[String,Option[Double]] = Map(), private 
 	}
 	
 	override def clone                                      = new Environment(env ++ Map(),functions ++ Map())
-	override def toString                                   = env.toString
+	override def toString                                   = {
+		"Environment = " + env.addString(new StringBuilder,"(",", ",")").toString
+	}
 	def cloneFunDef                                         = new Environment(Map(),functions ++ Map())
 	def iterator                                            = env.iterator
 	def foreach(mapper : ((String,Option[Double])) => Unit) = env.foreach(mapper)
@@ -34,10 +37,23 @@ class Environment(private var env : Map[String,Option[Double]] = Map(), private 
 	}
 	
 	//Functions
-	def containsDef(elt : FunctionDef) = functions.get(elt.ident) match { case Some(x) => x.contains(elt) ; case None => false }
-	def defFunction(elt : FunctionDef) = 
+	def containsDef(elt : FunctionDef)        = functions.get(elt.ident) match { case Some(x) => x.contains(elt) ; case None => false }
+	def defFunction(elt : FunctionDef) : Unit = defFunction(elt,false)
+	
+	def defFunction(elt : FunctionDef, overriding : Boolean) : Unit =
 	  functions.get(elt.ident) match {
-		  	case Some(x) => if (!x.add(elt)) throw new DuplicateDefinitionException("function",elt.ident)
+		  	case Some(x) => 
+		  	  if (!x.add(elt)) 
+		  		  if (overriding) {
+		  			  //It's a bit hacky but it works... The previous definition is removed because its signature
+		  			  //is equal to elt's one, then elt is added, bringing a new body. We could have used the find
+		  			  //method and then set a new body to the result (if any) but the code would be longer and I'm 
+		  		      //not sure it would be as performant as this solution, considering that a HashSet implements
+		  			  //remove and add in a constant time whereas a find call is more likely to have a O(n) complexity
+		  			  x.remove(elt)
+		  			  x.add(elt)
+		  		  } else
+		  		    throw new DuplicateDefinitionException("function",elt.ident)
 		  	case None    => functions += elt.ident -> HashSet(elt)
 		} 
 	
@@ -49,7 +65,6 @@ class Environment(private var env : Map[String,Option[Double]] = Map(), private 
 			}
 			case None    => throw new UndeclaredIdentifierException(key)
 		}
-	
 }		
 	  
 object Environment {
