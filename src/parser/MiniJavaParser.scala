@@ -28,7 +28,7 @@ class MiniJavaParser extends JavaTokenParsers {
 	def tern      : Parser[E]    = (pred <~ "?") ~ (expr <~ ":") ~ expr ^^ { case a ~ b ~ c => new Ternary(a,b,c)          } 
 	def opposite  : Parser[E]    = "-" ~> opposable                     ^^ { case a         => a.opposite                  }
 	def opposable : Parser[E]    = float | variable | ("(" ~> (allExpr | term) <~ ")") 
-	def factor    : Parser[E]    = float | variable | opposite | ("(" ~> allExpr <~ ")") 
+	def factor    : Parser[E]    = float | funCall  | variable | opposite | ("(" ~> allExpr <~ ")") 
 
 	//Predicates
 	type P = Predicate
@@ -56,8 +56,16 @@ class MiniJavaParser extends JavaTokenParsers {
 	type B = Block
 	type D = Double
 	 
-	def instr : Parser[I] = ((affectation | print | inc) <~ ";") | ifInstr | block | forInstr | switch
-	def block : Parser[B] = "{" ~> (instr*) <~ "}" ^^ { case l => new Block(l.toSeq : _*) }
+	def allInstr = instr(block | returnBlock) | returnInstr
+	def instr(block : Parser[B]) : Parser[I] = (
+	      ((affectation | print | inc | funCall) <~ ";") 
+		| ifInstr(block) 
+		| block 
+		| forInstr(block) 
+		| switch(block) 
+		| whileInstr(block)
+	)
+	def block : Parser[B] = "{" ~> (instr(block)*) <~ "}" ^^ { case l => new Block(l.toSeq : _*) }
 	 
 	//Affectations
 	def declaration   : Parser[Declaration] = "var" ~> ident ~ (("=" ~> allExpr)?) ^^ { 
@@ -70,12 +78,12 @@ class MiniJavaParser extends JavaTokenParsers {
 		case a ~ "-=" ~ b => new MinusAssignment(a,b) 
 		case a ~ "*=" ~ b => new ProdAssignment(a,b) 
 		case a ~ "/=" ~ b => new DivAssignment(a,b) 
-	}
+	} 
 	def affectation   : Parser[Affectation] = declaration | assignment
 	
 	//Increment, decrement
 	def inc           : Parser[EvaluableInstruction] = rightInc | leftInc
-	def rightInc      : Parser[EvaluableInstruction] = ident ~ "\\+\\+|--".r ^^ { 
+	def rightInc      : Parser[EvaluableInstruction] = ident ~ "\\+\\+|--".r  ^^ { 
 		case a ~ "++" => new Increment(a,true) 
 		case a ~ "--" => new Decrement(a,true) 
 	}
@@ -85,56 +93,93 @@ class MiniJavaParser extends JavaTokenParsers {
 	}
 
 	//If, else if, else
-	def ifInstr       : Parser[I]     = ifStatement                           ^^ { case a ~ b ~ c => new If(c,(List(a) ++ b).toSeq : _*) }
-	def elsif         : Parser[(P,B)] = "else " ~> test
-	def elseStatement : Parser[B]     = "else" ~> block
-	def ifStatement                   = test ~ rep(elsif) ~ (elseStatement?)
-	def test          : Parser[(P,B)] = (("if" ~ "(") ~> pred <~ ")") ~ block ^^ { case a ~ b => a -> b }
+	def ifInstr(block : Parser[B])       = ifStatement(block) ^^ { case a ~ b ~ c => new If(c,(List(a) ++ b).toSeq : _*) }
+	def elsif(block : Parser[B])         = "else " ~> test(block)
+	def elseStatement(block : Parser[B]) = "else" ~> block
+	def ifStatement(block : Parser[B])   = test(block) ~ rep(elsif(block)) ~ (elseStatement(block)?)
+	def test(block : Parser[B])          = (("if" ~ "(") ~> pred <~ ")") ~ block ^^ { case a ~ b => a -> b }
 	 
 	//Switch 
-	def switch        : Parser[I]     = switchStruct                          ^^ { case a ~ b ~ c => new Switch(a,c,b.toSeq : _*)          } 
-	def caseClause    : Parser[(D,B)] = ("case" ~> fpn <~ ":") ~ rep(instr)   ^^ { case a ~ b     => a.toDouble -> new Block(b.toSeq : _*) }
-	def defaultClause : Parser[B]     = ("default" ~ ":") ~> rep(instr)       ^^ { case a         => new Block(a.toSeq : _*)               }
-	def switchStruct                  = (("switch" ~ "(") ~> allExpr <~ (")" ~ "{")) ~ rep(caseClause) ~ (defaultClause?) <~ "}"
+	def switch(block : Parser[B])        = switchStruct(block) ^^ { case a ~ b ~ c => new Switch(a,c,b.toSeq : _*) } 
+	def caseClause(block : Parser[B])    = ("case" ~> fpn <~ ":") ~ rep(instr(block)) ^^ { 
+		case a ~ b     => a.toDouble -> new Block(b.toSeq : _*) 
+	}
+	def defaultClause(block : Parser[B]) = ("default" ~ ":") ~> rep(instr(block)) ^^ { case a => new Block(a.toSeq : _*) }
+	def switchStruct(block : Parser[B])  =
+		(("switch" ~ "(") ~> allExpr <~ (")" ~ "{")) ~ rep(caseClause(block)) ~ (defaultClause(block)?) <~ "}"
 	 
 	//Print
-	def print         : Parser[I]     = ("println" ~ "(") ~> (allExpr | "\"(.)*\"".r) <~ ")" ^^ { 
+	def print                           = ("println" ~ "(") ~> (allExpr | "\"(.)*\"".r) <~ ")" ^^ { 
 		 case a : Expression => new PrintExpr(a)
 		 case a : String     => new PrintString(a.substring(1,a.length() - 1))
 	 }
 	 
 	//For
-	def forInstr     : Parser[I]      = forStruct ^^ { case a ~ b ~ c ~ d => {
+	def forInstr(block : Parser[B])     = forStruct(block) ^^ { case a ~ b ~ c ~ d => {
 		 	var result = new For(b,d.instructions.toSeq : _*);
 		 	a match { case Some(init ~ last) => result.addInitClause  (init.:+(last).toSeq : _*); case None => }
 		 	c match { case Some(init ~ last) => result.addUpdateClause(init.:+(last).toSeq : _*); case None => }
 		 	result
 	 	}
 	}
-	def initClause                    = (rep(affectation <~ ",") ~ affectation)?
-	def updateClause                  = (rep(assignment <~ ",") ~ assignment)?
-	def forStruct                     = ("for" ~ "(") ~> (initClause <~ ";") ~ ((pred?) <~ ";") ~ (updateClause <~ ")") ~ block
+	def initClause                      = (rep(affectation <~ ",") ~ affectation)?
+	def update                          = assignment | inc
+	def updateClause                    = (rep(update <~ ",") ~ update)?
+	def forStruct(block : Parser[B])    = ("for" ~ "(") ~> (initClause <~ ";") ~ ((pred?) <~ ";") ~ (updateClause <~ ")") ~ block
 	 
 	//While
-	def whileInstr   : Parser[I]      = (("while" ~ "(") ~> pred <~ ")") ~ block ^^ { case a ~ b => new While(a,b.instructions .toSeq : _*)}
+	def whileInstr(block : Parser[B])   = (("while" ~ "(") ~> pred <~ ")") ~ block ^^ { 
+		case a ~ b => new While(a,b.instructions .toSeq : _*)
+	}
+	
+	//Functions
+	def funCall = (ident <~ "(") ~ (paramsCall <~ ")") ^^ { 
+	  	case a ~ b => b match {
+	  		case Some(c ~ d) => new FunctionCall(a,(c.:+(d)).toArray)
+	  		case None        => new FunctionCall(a)
+		}
+	} 
+	def funDef = ("function" ~> ident <~ "(") ~ (paramsDef <~ ")") ~ funBody ^^ { 
+	  	case a ~ b ~ c => b match {
+	  		case Some(d ~ e) => new FunctionDef(a,c,(d.:+(e)).toArray)
+	  		case None        => new FunctionDef(a,c,Array())
+	  	}
+	}
+	def paramsCall              = (rep(allExpr <~ ",") ~ allExpr)?
+	def paramsDef               = (rep(ident <~ ",") ~ ident)?
+	//This parser doesn't forces the block to contain a return instruction, however when the FunctionDef constructor is
+	//called, this property will be checked and funDef will fail if there was no return
+	def returnBlock : Parser[B] = "{" ~> rep(rep(instr(returnBlock)) ~ returnInstr ~ rep(instr(returnBlock))) <~ "}" ^^ { 
+	  	case a => new Block(a.flatten{ case x ~ y ~ z => (x :+ y) ++ z }.toSeq : _*)
+	}
+	def funBody                 = "{" ~> (allInstr*) <~ "}"	^^ { case l => new Block(l.toSeq : _*) }
+	def returnInstr             = "return" ~> allExpr <~ ";"                          ^^ { case a => new Return(a)           }
+	
+	//Program
+	def program = (rep(funDef) <~ ("void" ~ "main" ~ "(" ~ ")")) ~ block ^^ { case a ~ b => new Program(b,a.toSeq : _*) }
 }
 
 object Main extends MiniJavaParser {
 	def main(args : Array[String]) : Unit = {
 		var ev = Environment("x" -> 5)
-		val lines = Source.fromFile("test5.txt").mkString
-//		println(lines)
-//		println(parseAll(pred, "5 > 7 && true || false && true || (true && 9 <= 9)").get.test(ev))
-//		println(parseAll(expr,lines).get)
-//		println(parseAll(allExpr,"4*(5 > 7 ? 5 : 3) + 5 > 5 ? 0 : 1").get.valuation(ev))
+		val lines = Source.fromFile("test9.txt").mkString
+		var prog = parseAll(program,lines).get
+//		println(prog)
+		prog.exec
 		
-//		println(parseAll(pred,"(!(5 > 7) && (5 > 7)) || !false").get.test(ev))
-//		println(parseAll(allExpr,"- 5 *(5 + 6) + 55").get.valuation(ev))
-//		println("c".matches("(\\w | \\W)"))
-//		println(parseAll(print,lines).get)
-//		println(parseAll(testou,"coucou").get)
-//		println(parseAll(whileInstr,lines).get)
-		println(parseAll(instr,lines).get.exec(ev))
-		println(ev)
+//		var test   = Array(block,ifInstr(block),switch(returnBlock),forInstr(block),whileInstr(block),assignment <~ ";",
+//				allExpr,funDef,funDef,program)
+//		var i      = -1
+//		var errors = 0
+//		var input  = ""
+//		test.foreach(p => 
+//			try {
+//				i    += 1
+//				input = Source.fromFile("test%d.txt".format(i)).mkString
+//				parseAll(p,input).get
+//			} catch {
+//				case _ => println("Test n°%d failed on input : %s".format(i,input)) ; errors += 1
+//			})
+//		if (errors == 0) println("All tests ran successfully !") 
 	}
 }

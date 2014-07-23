@@ -5,5 +5,5 @@ for (var x = 5, y = 17, var z = 9 ; true ; ) {
 	} else {
 		z = z + 3;
 	}
-	println(10)
+	println(10);
 }

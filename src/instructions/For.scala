@@ -24,7 +24,7 @@ class For(val continuation : Option[Predicate], instr : Instruction[Any]*) exten
 	
 	override def exec(ev : Environment) = {
 		var cpEv = ev.clone
-		for (affectation <- initialization) affectation.exec(ev)
+		for (affectation <- initialization) affectation.exec(cpEv)
 		while (continuation match { case Some(p) => p.test(cpEv) ; case None => true }) {
 			instructions.foreach(instr => {
 				instr.exec(cpEv)

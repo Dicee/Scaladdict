@@ -1,0 +1,10 @@
+function Thomas(shell,vim) {
+	if (true) { return 35; }
+	else { 
+		return x > 5 ? 0 : 1;
+	}
+	while (5 > 1) {
+		var x = 4;
+		return x;
+	}
+}

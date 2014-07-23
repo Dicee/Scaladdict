@@ -1,12 +1,31 @@
 package instructions
 
+import scala.collection.mutable.HashSet
 import expressions.Expression
+import expressions.Value
 import expressions.Variable
 import predicates.Predicate
-import expressions.Value
+import scala.util.control.Breaks._
 
-class FunctionDef(val ident : String, val body : Block, val returnInstr : Expression, val args : Array[String])
-	extends AbstractInstruction[Unit] {
+class FunctionDef(val ident : String, val body : Block, val args : Array[String]) extends Instruction[Unit] {
+	/////// That's part of the main constructor ///////
+	checkArgs
+	private def checkArgs = {
+		var argsSet = HashSet[String]() 
+		for (arg <- args) if (!argsSet.add(arg)) throw new DuplicateParameterException
+		if (!body.containsReturn) throw new MissingReturnException(ident)
+	}
+	
+	private[instructions] def containsReturn = true
+	private def findReturn(instr : Instruction[Any]) = {
+		var block = instr.toBlock
+		println(body.instructions.addString(new StringBuilder).toString)
+		block.instructions.find(instr => instr.isInstanceOf[Return]) match { 
+			case None    => throw new MissingReturnException(ident) 
+			case Some(x) =>
+		}
+	}
+	///////////////////////////////////////////////////
 	
 	def exec(ev : Environment) = ev.defFunction(this)
 	
@@ -23,40 +42,47 @@ class FunctionDef(val ident : String, val body : Block, val returnInstr : Expres
 	override def equals(a : Any) : Boolean = {
 		if (!a.isInstanceOf[FunctionDef]) return false
 		var other = a.asInstanceOf[FunctionDef]
-		return other.ident == ident && other.args.sameElements(args)
+		return other.ident == ident && other.args.length == args.length
 	}
 }
 
-class FunctionCall(ident : String, args : Array[Expression]) extends EvaluableInstruction {
-	def exec(ev : Environment) : Double = 0
-	def formatInstr(indent : String) = {
+class FunctionCall(ident: String, args: Array[Expression]) extends EvaluableInstruction {
+	def this(ident : String)        = this(ident,Array())
+	def valuation(ev : Environment) = exec(ev)
+	
+	def exec(ev: Environment) : Double = {
+		var funDef = ev.getDef(ident,args.length)
+		var result = 0d
+		
+		//We first create a local environment containing all the parameters associated with their value
+		//in addition to all the current environment function definitions
+		var execEv = ev.cloneFunDef
+		(funDef.args zip args).foreach{ case (a,b) => execEv !+= a -> Some(b.valuation(ev)) }
+		
+		breakable { funDef.body.instructions.foreach(instr => 
+			if (instr.isInstanceOf[Return]) { result = instr.asInstanceOf[Return].exec(execEv); break }
+			else                            instr.exec(execEv)
+		)}
+		return result
+	}
+	
+	def formatInstr(indent : String) : String = {
 		var sb      = new StringBuilder
 		var argsStr = {
 			var i = 0
 			args.foreach(arg => sb.append((if (i == 0) "" else ", ") + arg.formatExpr))
 		}
-		"%s%s(%s)".format(indent,ident,args.addString(new StringBuilder,", "))
+		return "%s%s(%s)".format(indent,ident,args.addString(new StringBuilder,", "))
 	}
+	def formatExpr = formatInstr("")
 }
 
-abstract class Parameter(val name : String)
-case class Expr(s : String, expr : Expression) extends Parameter(s)
-case class Pred(s : String, pred : Predicate ) extends Parameter(s)
-
-class Test(val s : String) {
-	override def equals(a : Any) : Boolean = {
-		if (!a.isInstanceOf[Test]) return false
-		return a.asInstanceOf[Test].s.equals(s)
-	}
-	override def toString = s
+class Return(expr : Expression) extends Instruction[Double] {
+	def exec(ev: Environment)                = expr.valuation(ev)
+	def formatInstr(indent : String)         = "%sreturn %s;".format(indent,expr.formatExpr)
+	def formatExpr                           = formatInstr("")
+	private[instructions] def containsReturn = true
 }
 
-object Test {
-	def main(args : Array[String]) = {
-		var map : Map[Test,String] = Map()
-		map += new Test("coucou") -> "coucou1"
-		map += new Test("coucou") -> "coucou2"
-		
-		println(Array("coucou","salut").sameElements(Array("coucou","salut")))
-	}
-}
+class MissingReturnException(ident : String) extends Exception("%s is missing a return instruction".format(ident))
+class DuplicateParameterException extends Exception("All the parameters identifiers must be distinct")

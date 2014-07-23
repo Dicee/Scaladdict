@@ -21,13 +21,14 @@ class Assignment(protected val varName : String, val rightMember : Expression) e
 	override def clone               = new Assignment(varName,rightMember)
 }
 
-class Declaration(private val varName : String, val rightMember : Option[Expression]) extends AbstractInstruction[Unit] with Affectation {
+class Declaration(private val varName : String, val rightMember : Option[Expression]) extends Instruction[Unit] with Affectation {
 	def this(variable : Variable)                    = this(variable.name,None)
 	def this(varName : String )                      = this(varName,None)
 	def this(variable : Variable, expr : Expression) = this(variable.name,Some(expr))
 	def this(varName : String, expr : Expression)    = this(varName,Some(expr))
 	
 	def name = varName
+	private[instructions] def containsReturn = false
 	def exec(ev : Environment) = ev !+= varName -> initValue(ev)
 
 	private def initValue(ev : Environment) = {

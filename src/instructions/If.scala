@@ -22,16 +22,28 @@ class If(val elseClause : Option[Block], keyVals : (Predicate,Block)*) extends I
 		this.cases = cases
 	}
 	
+	private[instructions] def containsReturn : Boolean = {
+		breakable {	
+			keyVals.foreach { case (key,value) => if (value.containsReturn) break }
+			return elseClause match {
+				case Some(x) => x.containsReturn
+				case None    => false
+			}
+		}
+		return true
+	}
+	
 	def exec(ev : Environment) = {
-		breakable { for (caseClause <- cases)
+		breakable { 
+		  cases.foreach(caseClause =>
 			if (caseClause._1 .test(ev)) {
 				caseClause._2 .exec(ev)
 				break
-			}
-		}
-		elseClause match {
-			case Some(instr) => instr.exec(ev)
-			case None        => 
+			})
+			elseClause match {
+				case Some(instr) => instr.exec(ev)
+				case None        => 
+		  	}
 		}
 	}
 	

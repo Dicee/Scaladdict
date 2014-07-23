@@ -1,6 +1,6 @@
-while (jeTemmerde) {
-	fuckyou = fuckyou + 1;
-	for (var enculé = 5 ; enculé < 2 ; enculé = enculé - 1) {
+while (hahaha) {
+	fuckyou = tralalala + 1;
+	for (var enculé = 5 ; non < 2 ; random--, salut++) {
 		println("FUCKKK");
 		println("YOUUUUUUUUUU");
 	}

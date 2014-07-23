@@ -33,7 +33,7 @@ object Test {
 		var prog : Program = new Program(new Block(declareCoucou,declareNon,alloc,declareResult,switch))
 		
 		
-		println(prog)
+//		println(prog)
 		prog.exec
 //		println(block)
 //		println(ev)
@@ -46,6 +46,6 @@ object Test {
 		
 		var expr2 = new Minus(new Variable("coucou"),new Dot(new Plus(alloc,new Value(10)),new Variable("coucou")))
 		
-		println(expr2.valuation(Environment("coucou" -> 15)) + " " + expr2)
+//		println(expr2.valuation(Environment("coucou" -> 15)) + " " + expr2)
 	}
 }

@@ -1,10 +1,10 @@
 package instructions
 
-class Program(val block : Block) extends Iterable[Instruction[Any]] {
-	def iterator          = block.iterator
-	override def toString = "Program " + block.formatInstr("")
+class Program(val block : Block, val functions : FunctionDef*) {
+	override def toString = functions.addString(new StringBuilder,"","\n\n","\n\n").toString + "void main() " + block.formatInstr("")
 	def exec : Unit = {
 		var ev : Environment = new Environment
-		block.instructions.foreach(instr => { instr.exec(ev) ; println("Environment = " + ev) })
+		functions.foreach(fun => ev.defFunction(fun))
+		block.instructions.foreach(instr => { instr.exec(ev) /*; println("Environment = " + ev)*/ })
 	} 
 }

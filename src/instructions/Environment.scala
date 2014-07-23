@@ -1,17 +1,18 @@
 package instructions
 
 import scala.collection.mutable.HashSet
+import scala.util.control.Breaks._
 
-class Environment extends Cloneable {
+class Environment(private var env : Map[String,Option[Double]] = Map(), private var functions : Map[String,HashSet[FunctionDef]] = Map()) extends Cloneable {
 	//Variables
-	private var env : Map[String,Option[Double]] = Map()
 	private def this(env : Map[String,Option[Double]]) = {
 		this()
 		this.env = env
 	}
 	
-	override def clone                                      = new Environment(env ++ Map())
+	override def clone                                      = new Environment(env ++ Map(),functions ++ Map())
 	override def toString                                   = env.toString
+	def cloneFunDef                                         = new Environment(Map(),functions ++ Map())
 	def iterator                                            = env.iterator
 	def foreach(mapper : ((String,Option[Double])) => Unit) = env.foreach(mapper)
 	def contains(key : String)                              = env.contains(key)
@@ -29,25 +30,28 @@ class Environment extends Cloneable {
 			case Some(d) => d
 			case None    => throw new UninitializedVariableException(key)
 		}
-		case None => throw new UndefinedVariableException(key)
+		case None => throw new UndeclaredIdentifierException(key)
 	}
 	
 	//Functions
-	private var functions : HashSet[FunctionDef] = HashSet()
+	def containsDef(elt : FunctionDef) = functions.get(elt.ident) match { case Some(x) => x.contains(elt) ; case None => false }
+	def defFunction(elt : FunctionDef) = 
+	  functions.get(elt.ident) match {
+		  	case Some(x) => if (!x.add(elt)) throw new DuplicateDefinitionException("function",elt.ident)
+		  	case None    => functions += elt.ident -> HashSet(elt)
+		} 
 	
-	def containsDef(elt : FunctionDef) = functions.contains(elt)
-	def defFunction(elt : FunctionDef) = { 
-		if (!functions.add(elt)) throw new DuplicateDefinitionException("function",elt.ident)
-	}
-//	def getDef(key : String) : FunctionDef = env.get(key) match {
-//		case Some(optionValue) => optionValue match {
-//			case Some(d) => d
-//			case None    => throw new UninitializedVariableException(key)
-//		}
-//		case None => throw new UndefinedVariableException(key)
-//	}
-}
-
+	def getDef(key : String, nParams : Int) = 
+		functions.get(key) match {
+			case Some(x) => x.find(funDef => funDef.args.length == nParams) match {
+			  	case Some(y) => y
+			  	case None    => throw new ArityException(key,nParams)
+			}
+			case None    => throw new UndeclaredIdentifierException(key)
+		}
+	
+}		
+	  
 object Environment {
 	def apply(keyVals : (String,Double)*) : Environment = {
 		var result = new Environment();
@@ -56,6 +60,7 @@ object Environment {
 	}
 }
 
-class UndefinedVariableException(var varName : String) extends Exception("Identifier %s is not declared".format(varName))
-class DuplicateDefinitionException(var typeName : String, var varName : String) extends Exception("Duplicate %s %s".format(typeName,varName)) 
-class UninitializedVariableException(var varName : String) extends Exception("Variable %s was declared but not initialized".format(varName))
+class UndeclaredIdentifierException(ident : String) extends Exception("Identifier %s is not declared".format(ident))
+class DuplicateDefinitionException(typeName : String, var varName : String) extends Exception("Duplicate %s %s".format(typeName,varName)) 
+class UninitializedVariableException(varName : String) extends Exception("Variable %s was declared but not initialized".format(varName))
+class ArityException(ident : String, arity : Int) extends Exception("%s(args... [%s]) was not found".format(ident,arity))

@@ -2,8 +2,9 @@ package instructions
 
 import expressions.Expression
 import scala.collection.mutable.HashMap
+import scala.util.control.Breaks._
 
-class Switch(val expr : Expression, val default : Option[Block], keyVals : (Double,Block)*) extends AbstractInstruction[Unit] {
+class Switch(val expr : Expression, val default : Option[Block], keyVals : (Double,Block)*) extends Instruction[Unit] {
 	private var cases : HashMap[Double,Block] = new HashMap()
 	keyVals.foreach(keyVal => this += keyVal)
 	
@@ -22,6 +23,17 @@ class Switch(val expr : Expression, val default : Option[Block], keyVals : (Doub
 			throw new IllegalArgumentException("Duplicate case " + kv._1)
 		else 
 			cases += kv
+	}
+	
+	private[instructions] def containsReturn : Boolean = {
+		breakable {	
+			keyVals.foreach { case (key,value) => if (value.containsReturn) break }
+			return default match {
+				case Some(x) => x.containsReturn
+				case None    => false
+			}
+		}
+		return true
 	}
 	
 	def exec(ev : Environment) = {

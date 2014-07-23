@@ -1,11 +1,14 @@
 package instructions
 
 import instructions.affectations.Declaration
+import expressions._
+import predicates._
+import instructions.affectations.Assignment
 
-class Block(instr : Instruction[Any]*) extends AbstractInstruction[Unit] {
+class Block(instr : Instruction[Any]*) extends Instruction[Unit] {
 	val instructions : Array[Instruction[Any]] = instr.toArray	
 	
-	def iterator : Iterator[Instruction[Any]] = instructions.iterator
+	private[instructions] def containsReturn = instructions.find(instr => instr.containsReturn) != None
 	def exec(ev : Environment) : Unit = {
 		var cpEv = ev.clone
 		instructions.foreach(instr => instr.exec(cpEv))
