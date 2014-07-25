@@ -1,0 +1,26 @@
+function fact(n) {
+	if (n == 0) { return 1; }
+	return n*fact(n - 1);
+}
+
+function int(n) {
+
+}
+
+function mod(n,p) {
+	while (n - p >= 0) {
+		n -= p;
+	}
+	return n < 1 ? 0 : n;
+}
+
+function squaringExponentiation(x,n) {
+	if (n == 0) { return 1; }
+	if (mod(n,2)) {
+		var res = squaringExponentiation(x,n/2);
+		return res*res;
+	} else {
+		println("impair");
+		return x*squaringExponentiation(x,n - 1);
+	}
+}

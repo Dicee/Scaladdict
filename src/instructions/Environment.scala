@@ -4,7 +4,7 @@ import scala.collection.mutable.HashSet
 import scala.util.control.Breaks._
 import expressions.Value
 
-class Environment(private var env : Map[String,Option[Double]] = Map(), private var functions : Map[String,HashSet[FunctionDef]] = Map()) extends Cloneable {
+class Environment(private var env : Map[String,Option[Double]] = Map(), var functions : Map[String,HashSet[FunctionDef]] = Map()) extends Cloneable {
 	//Variables
 	private def this(env : Map[String,Option[Double]]) = {
 		this()

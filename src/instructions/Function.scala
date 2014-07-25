@@ -59,6 +59,7 @@ class FunctionCall(ident: String, args: Array[Expression]) extends EvaluableInst
 	def valuation(ev : Environment) = exec(ev)
 	
 	def exec(ev: Environment) : Double = {
+		println(args.toSeq.map(expr => expr.valuation(ev)) + "   " + ev)
 		var funDef = ev.getDef(ident,args.length)
 		var result = 0d
 		
@@ -70,7 +71,7 @@ class FunctionCall(ident: String, args: Array[Expression]) extends EvaluableInst
 		try {
 			funDef.body.instructions.foreach(instr => instr.exec(execEv))
 		} catch {
-			case e : ReturnResultException => result = e.result; println("coucou")
+			case e : ReturnResultException => result = e.result
 		}
 		return result
 	}
