@@ -16,19 +16,20 @@ class MiniJavaParser extends JavaTokenParsers {
 	///!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	///						      Don't forget to improve the inc/dec
 	///!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	def allExpr   : Parser[E]    = inc | assignment | tern | expr 
-	def expr      : Parser[E]    = term ~ rep(plus | minus)             ^^ { case a   ~ b   => (a /: b)((acc,f) => f(acc)) } 
-	def term      : Parser[E]    = factor ~ rep(times | divide)         ^^ { case a   ~ b   => (a /: b)((acc,f) => f(acc)) }
-	def plus      : Parser[E=>E] = "+" ~ term                           ^^ { case "+" ~ b   => _ + b                       }
-	def minus     : Parser[E=>E] = "-" ~ term                           ^^ { case "-" ~ b   => _ - b                       }
-	def times     : Parser[E=>E] = "*" ~ factor                         ^^ { case "*" ~ b   => _ * b                       }
-	def divide    : Parser[E=>E] = "/" ~ factor                         ^^ { case "/" ~ b   => _ / b                       } 
-	def variable  : Parser[E]    = ident                                ^^ { case x         => new Variable(x)             }
-	def float     : Parser[E]    = fpn                                  ^^ { case x         => new Value(x.toDouble)       }
-	def tern      : Parser[E]    = (pred <~ "?") ~ (expr <~ ":") ~ expr ^^ { case a ~ b ~ c => new Ternary(a,b,c)          } 
-	def opposite  : Parser[E]    = "-" ~> opposable                     ^^ { case a         => a.opposite                  }
-	def opposable : Parser[E]    = float | variable | ("(" ~> (allExpr | term) <~ ")") 
-	def factor    : Parser[E]    = float | funCall  | variable | opposite | ("(" ~> allExpr <~ ")") 
+	def allExpr      : Parser[E]    = inc | assignment | tern | expr 
+	def expr         : Parser[E]    = term ~ rep(plus | minus)             ^^ { case a   ~ b   => (a /: b)((acc,f) => f(acc)) } 
+	def term         : Parser[E]    = factor ~ rep(times | divide)         ^^ { case a   ~ b   => (a /: b)((acc,f) => f(acc)) }
+	def plus         : Parser[E=>E] = "+" ~ term                           ^^ { case "+" ~ b   => _ + b                       }
+	def minus        : Parser[E=>E] = "-" ~ term                           ^^ { case "-" ~ b   => _ - b                       }
+	def times        : Parser[E=>E] = "*" ~ factor                         ^^ { case "*" ~ b   => _ * b                       }
+	def divide       : Parser[E=>E] = "/" ~ factor                         ^^ { case "/" ~ b   => _ / b                       } 
+	def variable     : Parser[E]    = ident                                ^^ { case x         => new Variable(x)             }
+	def float        : Parser[E]    = fpn                                  ^^ { case x         => new Value(x.toDouble)       }
+	def tern         : Parser[E]    = (pred <~ "?") ~ (expr <~ ":") ~ expr ^^ { case a ~ b ~ c => new Ternary(a,b,c)          } 
+	def opposite     : Parser[E]    = "-" ~> unaryOperand                  ^^ { case a         => a.opposite                  }
+	def intCast      : Parser[E]    = ("(" ~ "int" ~ ")") ~> unaryOperand  ^^ { case a         => new IntCast(a)              }
+	def unaryOperand : Parser[E]    = float | variable | ("(" ~> (allExpr | term) <~ ")") 
+	def factor       : Parser[E]    = float | funCall  | variable | opposite | intCast | ("(" ~> allExpr <~ ")") 
 
 	//Predicates
 	type P = Predicate
@@ -39,7 +40,8 @@ class MiniJavaParser extends JavaTokenParsers {
 	def ge : Parser[P] = (expr <~ ">=") ~ expr ^^ { case e0 ~ e1 => e0 >= e1 }
 	def gt : Parser[P] = (expr <~ ">" ) ~ expr ^^ { case e0 ~ e1 => e0 >  e1 }
 	def eq : Parser[P] = (expr <~ "==") ~ expr ^^ { case e0 ~ e1 => e0 == e1 }
-	def op : Parser[P] =  le | lt | ge | gt | eq | expr
+	def ne : Parser[P] = (expr <~ "!=") ~ expr ^^ { case e0 ~ e1 => e0 != e1 }
+	def op : Parser[P] =  le | lt | ge | gt | eq | ne | expr
 	
 	//Boolean operators
 	def pred       : Parser[P]    = boolTerm ~ rep(or)    ^^ { case a    ~ b => (a /: b)((acc,f) => f(acc))  }
@@ -49,7 +51,7 @@ class MiniJavaParser extends JavaTokenParsers {
 	def bool       : Parser[P]    = ("true" | "false")    ^^ { case "true"   => True ; case "false" => False }
 	def neg        : Parser[P]    = "!" ~> negable        ^^ { case a => a.not }
 	def boolFactor : Parser[P]    = bool | "(" ~> pred <~ ")" | op | neg
-	def negable    : Parser[P]    = bool | "(" ~> (boolTerm | pred | op) <~ ")"
+	def negable    : Parser[P]    = bool | "(" ~> (boolTerm | pred | op | allExpr) <~ ")"
 
 	private val fpt = floatingPointNumber
 	type I = Instruction[Any]
@@ -162,10 +164,12 @@ class MiniJavaParser extends JavaTokenParsers {
 object Main extends MiniJavaParser {
 	def main(args : Array[String]) : Unit = {
 		var ev = Environment("x" -> 5)
-		val lines = Source.fromFile("test9.txt").mkString
-		var prog = parseAll(program,lines).get
+//		val lines = Source.fromFile("test9.txt").mkString
+//		var prog = parseAll(program,lines).get
 //		println(prog)
-		prog.exec
+//		prog.exec
+		
+		println(parseAll(allExpr,"mod(n,2)").get)
 		
 //		var test   = Array(block,ifInstr(block),switch(returnBlock),forInstr(block),whileInstr(block),assignment <~ ";",
 //				allExpr,funDef,funDef,program)

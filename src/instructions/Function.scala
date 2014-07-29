@@ -59,7 +59,7 @@ class FunctionCall(ident: String, args: Array[Expression]) extends EvaluableInst
 	def valuation(ev : Environment) = exec(ev)
 	
 	def exec(ev: Environment) : Double = {
-		println(args.toSeq.map(expr => expr.valuation(ev)) + "   " + ev)
+		//println(args.toSeq + "   " + ev)
 		var funDef = ev.getDef(ident,args.length)
 		var result = 0d
 		

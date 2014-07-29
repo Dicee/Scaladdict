@@ -12,6 +12,7 @@ abstract class Expression extends Predicate {
 	def * (expr : Expression) = new Dot(this,expr)
 	def / (expr : Expression) = new Div(this,expr)
 	def ==(expr : Expression) = new Equal(this,expr)
+	def !=(expr : Expression) = new Different(this,expr)
 	def > (expr : Expression) = new GreaterThan(this,expr)
 	def >=(expr : Expression) = new GreaterThan(this,expr,true)
 	def < (expr : Expression) = new LowerThan(this,expr)

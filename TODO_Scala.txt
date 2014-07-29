@@ -2,5 +2,8 @@
 - débuguer les String
 - débuguer les print("") (parser)
 - permettre la syntaxe sans accolade quand il n'y a qu'une instruction
-- introduire les calculs d'entier 
-- rajouter la syntaxe 1d pour éviter la confusion entre entier et double au moment du typage dynamique
+- introduire les calculs d'entier 														
+- rajouter la syntaxe 1d pour éviter la confusion entre entier 							
+et double au moment du typage dynamique
+- rajouter les commentaires de ligne (si tant est que ça soit possible
+- négation d'une expression

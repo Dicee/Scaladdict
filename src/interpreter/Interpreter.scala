@@ -50,9 +50,10 @@ object Interpreter extends MiniJavaParser {
 			  	instr = ""
 			}
 		}*/
-		println(parseAll(loadDef,"load def C:/test.scaladdict").get)
+		println(parseAll(loadDef,"load def C:/Users/David/Desktop/a.scaladdict").get)
 		println(ev.getDef("squaringExponentiation",2))
-		var call = new FunctionCall("squaringExponentiation",Array(new Value(2),new Value(2)))
+		println(ev.getDef("mod",2))
+		var call = new FunctionCall("squaringExponentiation",Array(new Value(1.5),new Value(2)))
 		println(call.exec(ev))
 	}
 }

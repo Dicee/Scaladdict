@@ -33,3 +33,7 @@ class LowerThan(op1 : Expression, op2 : Expression, val equal : Boolean) extends
 class Equal(op1 : Expression, op2 : Expression) extends BinaryOp(op1,op2,"==") {
 	def test(ev : Environment) : Boolean = op1.valuation(ev) == op2.valuation(ev)
 }
+
+class Different(op1 : Expression, op2 : Expression) extends BinaryOp(op1,op2,"!=") {
+	def test(ev : Environment) : Boolean = op1.valuation(ev) != op2.valuation(ev)
+}
