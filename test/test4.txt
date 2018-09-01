@@ -1,7 +1,0 @@
-while (hahaha) {
-	fuckyou = tralalala + 1;
-	for (var enculé = 5 ; non < 2 ; random--, salut++) {
-		println("FUCKKK");
-		println("YOUUUUUUUUUU");
-	}
-}
